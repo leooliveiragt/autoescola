@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ALUNO
+  INSTRUTOR
+  ADMIN
+}
+
+enum KYCStatus {
+  PENDENTE
+  EM_ANALISE
+  APROVADO
+  REJEITADO
+}
+
+enum AulaStatus {
+  AGENDADA
+  CONFIRMADA
+  REALIZADA
+  CANCELADA
+}
+
+enum SubscriptionStatus {
+  ATIVA
+  CANCELADA
+  EXPIRADA
+  TRIAL
+}
+
+model User {
+  id                String             @id @default(cuid())
+  nome              String
+  email             String             @unique
+  emailVerified     DateTime?
+  senha             String?
+  telefone          String?
+  cpf               String?            @unique
+  dataNascimento    DateTime?
+  genero            String?
+  avatarUrl         String?
+  role              Role               @default(ALUNO)
+  ativo             Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  kyc               KYC?
+  enderecos         Endereco[]
+  perfilInstrutor   PerfilInstrutor?
+  aulasComoAluno    Aula[]             @relation("AulaAluno")
+  aulasComoInstrutor Aula[]            @relation("AulaInstrutor")
+  avaliacoesFeitas  Avaliacao[]        @relation("AvaliacaoAutor")
+  avaliacoesRecebidas Avaliacao[]      @relation("AvaliacaoAlvo")
+  accounts          Account[]
+  sessions          Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model KYC {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id])
+  status              KYCStatus @default(PENDENTE)
+  docFrenteUrl        String?
+  docVersoUrl         String?
+  comprovanteUrl      String?
+  selfieUrl           String?
+  observacaoAdmin     String?
+  analisadoEm         DateTime?
+  analisadoPor        String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Endereco {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id])
+  cep        String
+  logradouro String
+  numero     String?
+  bairro     String
+  cidade     String
+  estado     String
+  lat        Float?
+  lng        Float?
+  principal  Boolean @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model PerfilInstrutor {
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  user             User               @relation(fields: [userId], references: [id])
+  bio              String?            @db.Text
+  cnhEAR           String?
+  precoPorHora     Float
+  raioAtendimentoKm Int               @default(20)
+  transmissoes     String[]
+  especialidades   String[]
+  taxaAprovacao    Float?
+  totalAlunos      Int                @default(0)
+  anosExperiencia  Int                @default(0)
+  mediaAvaliacao   Float              @default(0)
+  totalAvaliacoes  Int                @default(0)
+  visivel          Boolean            @default(false)
+  subscription     Subscription?
+  disponibilidades Disponibilidade[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Disponibilidade {
+  id          String          @id @default(cuid())
+  instrutorId String
+  instrutor   PerfilInstrutor @relation(fields: [instrutorId], references: [id])
+  diaSemana   Int
+  horaInicio  String
+  horaFim     String
+  ativo       Boolean         @default(true)
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  instrutorId          String             @unique
+  instrutor            PerfilInstrutor    @relation(fields: [instrutorId], references: [id])
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  status               SubscriptionStatus @default(TRIAL)
+  plano                String             @default("mensal")
+  valorMensal          Float              @default(49)
+  inicioEm             DateTime?
+  fimEm                DateTime?
+  canceladoEm          DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model Aula {
+  id          String     @id @default(cuid())
+  alunoId     String
+  aluno       User       @relation("AulaAluno", fields: [alunoId], references: [id])
+  instrutorId String
+  instrutor   User       @relation("AulaInstrutor", fields: [instrutorId], references: [id])
+  data        DateTime
+  duracaoHoras Float     @default(1)
+  precoPorHora Float
+  totalPago   Float
+  status      AulaStatus @default(AGENDADA)
+  stripePaymentIntentId String?
+  notasAluno  String?
+  notasInstrutor String?
+  avaliacao   Avaliacao?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Avaliacao {
+  id         String   @id @default(cuid())
+  aulaId     String   @unique
+  aula       Aula     @relation(fields: [aulaId], references: [id])
+  autorId    String
+  autor      User     @relation("AvaliacaoAutor", fields: [autorId], references: [id])
+  alvoId     String
+  alvo       User     @relation("AvaliacaoAlvo", fields: [alvoId], references: [id])
+  nota       Int
+  comentario String?  @db.Text
+  createdAt  DateTime @default(now())
+}
