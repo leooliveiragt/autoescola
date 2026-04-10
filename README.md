@@ -150,3 +150,4 @@ vercel --prod
 - [ ] Sistema de pacotes de aulas (desconto por volume)
 - [ ] Certificado de conclusão digital
 - [ ] Stripe Identity para KYC automatizado
+# autoescola
