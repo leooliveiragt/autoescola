@@ -5,7 +5,7 @@ import { AssinaturaClient } from '@/components/instrutor/assinatura-client'
 
 export const dynamic = 'force-dynamic'
 
-const DEFAULT_MENSALIDADE = 49
+const DEFAULT_MENSALIDADE = 14.90
 
 export default async function InstructorAssinaturaPage() {
   const session = await auth()

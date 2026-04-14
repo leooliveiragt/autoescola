@@ -74,7 +74,7 @@ export default async function AdminPage() {
     subscricoesAtivas,
     alunosNovosSetmana: alunosNovos,
     instrutoresNovosSetmana: instrutoresNovos,
-    receitaMes: subscricoesAtivas * 49,
+    receitaMes: subscricoesAtivas * 14.90,
     mediaAvaliacoes: 4.87,
   }
 

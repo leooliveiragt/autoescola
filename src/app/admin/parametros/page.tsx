@@ -5,7 +5,7 @@ import { Save, Loader2 } from 'lucide-react'
 
 export default function AdminParametrosPage() {
   const [taxa, setTaxa] = useState('10')
-  const [mensalidade, setMensalidade] = useState('49')
+  const [mensalidade, setMensalidade] = useState('14.90')
   const [repasse, setRepasse] = useState('90')
   const [pixChave, setPixChave] = useState('')
   const [loading, setLoading] = useState(true)

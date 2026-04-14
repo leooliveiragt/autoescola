@@ -78,7 +78,7 @@ export function InstructorCTA() {
           {[
             { val: 'R$0', label: 'Para criar o perfil' },
             { val: '90%', label: 'Você fica de cada aula' },
-            { val: 'R$49/mês', label: 'Plano mensal' },
+            { val: 'R$14,90/mês', label: 'Plano mensal' },
           ].map(s => (
             <div key={s.label}>
               <div className="text-2xl font-extrabold text-amber-500">{s.val}</div>

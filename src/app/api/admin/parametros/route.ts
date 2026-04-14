@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 const DEFAULTS: Record<string, string> = {
   taxa_plataforma: '10',
-  mensalidade_instrutor: '49',
+  mensalidade_instrutor: '14.90',
   repasse_instrutor: '90',
   pix_chave: '',
 }
