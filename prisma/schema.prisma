@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -34,6 +35,24 @@ enum SubscriptionStatus {
   TRIAL
 }
 
+enum ModoRecebimento {
+  PLATAFORMA
+  DIRETO
+}
+
+enum TicketStatus {
+  ABERTO
+  EM_ATENDIMENTO
+  RESOLVIDO
+  FECHADO
+}
+
+enum ReclamacaoStatus {
+  ABERTA
+  EM_ANALISE
+  RESOLVIDA
+}
+
 model User {
   id                String             @id @default(cuid())
   nome              String
@@ -57,6 +76,9 @@ model User {
   aulasComoInstrutor Aula[]            @relation("AulaInstrutor")
   avaliacoesFeitas  Avaliacao[]        @relation("AvaliacaoAutor")
   avaliacoesRecebidas Avaliacao[]      @relation("AvaliacaoAlvo")
+  tickets           Ticket[]           @relation("TicketAutor")
+  ticketMensagens   TicketMensagem[]   @relation("MensagemAutor")
+  reclamacoes       Reclamacao[]
   accounts          Account[]
   sessions          Session[]
 }
@@ -134,10 +156,29 @@ model PerfilInstrutor {
   mediaAvaliacao   Float              @default(0)
   totalAvaliacoes  Int                @default(0)
   visivel          Boolean            @default(false)
+  modoRecebimento  ModoRecebimento    @default(PLATAFORMA)
   subscription     Subscription?
   disponibilidades Disponibilidade[]
+  veiculo          Veiculo?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+}
+
+model Veiculo {
+  id          String          @id @default(cuid())
+  instrutorId String          @unique
+  instrutor   PerfilInstrutor @relation(fields: [instrutorId], references: [id])
+  placa       String
+  marca       String
+  modelo      String
+  ano         Int
+  cor         String
+  cambio      String          @default("manual")
+  opcionais   String[]
+  crlvUrl     String?
+  ativo       Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
 
 model Disponibilidade {
@@ -163,6 +204,9 @@ model Subscription {
   inicioEm             DateTime?
   fimEm                DateTime?
   canceladoEm          DateTime?
+  cartaoFinal          String?
+  cartaoBandeira       String?
+  cartaoNome           String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 }
@@ -181,7 +225,10 @@ model Aula {
   stripePaymentIntentId String?
   notasAluno  String?
   notasInstrutor String?
+  pagamentoLiberadoEm DateTime?
   avaliacao   Avaliacao?
+  reclamacao  Reclamacao?
+  avaliacaoInstrutor AvaliacaoInstrutor?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -197,4 +244,57 @@ model Avaliacao {
   nota       Int
   comentario String?  @db.Text
   createdAt  DateTime @default(now())
+}
+
+// Avaliação do aluno feita pelo instrutor (sentido inverso)
+model AvaliacaoInstrutor {
+  id         String   @id @default(cuid())
+  aulaId     String   @unique
+  aula       Aula     @relation(fields: [aulaId], references: [id])
+  instrutorId String
+  alunoId    String
+  nota       Int
+  comentario String?  @db.Text
+  createdAt  DateTime @default(now())
+}
+
+model Configuracao {
+  id        String   @id @default(cuid())
+  chave     String   @unique
+  valor     String
+  updatedAt DateTime @updatedAt
+}
+
+model Ticket {
+  id        String        @id @default(cuid())
+  autorId   String
+  autor     User          @relation("TicketAutor", fields: [autorId], references: [id])
+  titulo    String
+  status    TicketStatus  @default(ABERTO)
+  mensagens TicketMensagem[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model TicketMensagem {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  autorId   String
+  autor     User     @relation("MensagemAutor", fields: [autorId], references: [id])
+  mensagem  String   @db.Text
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Reclamacao {
+  id          String           @id @default(cuid())
+  aulaId      String           @unique
+  aula        Aula             @relation(fields: [aulaId], references: [id])
+  autorId     String
+  autor       User             @relation(fields: [autorId], references: [id])
+  descricao   String           @db.Text
+  status      ReclamacaoStatus @default(ABERTA)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }

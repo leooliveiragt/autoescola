@@ -2,6 +2,7 @@ export type Role = 'ALUNO' | 'INSTRUTOR' | 'ADMIN'
 export type KYCStatus = 'PENDENTE' | 'EM_ANALISE' | 'APROVADO' | 'REJEITADO'
 export type AulaStatus = 'AGENDADA' | 'CONFIRMADA' | 'REALIZADA' | 'CANCELADA'
 export type SubscriptionStatus = 'ATIVA' | 'CANCELADA' | 'EXPIRADA' | 'TRIAL'
+export type ModoRecebimento = 'PLATAFORMA' | 'DIRETO'
 
 export interface User {
   id: string
@@ -16,6 +17,7 @@ export interface User {
   createdAt: Date
   kyc?: KYC
   perfilInstrutor?: PerfilInstrutor
+  enderecos?: Endereco[]
 }
 
 export interface KYC {
@@ -57,6 +59,7 @@ export interface PerfilInstrutor {
   mediaAvaliacao: number
   totalAvaliacoes: number
   visivel: boolean
+  modoRecebimento: ModoRecebimento
   user?: User
   subscription?: Subscription
   disponibilidades?: Disponibilidade[]
@@ -114,9 +117,14 @@ export interface FiltrosInstrutor {
   precoMaximo?: number
   distanciaMaximaKm?: number
   especialidades?: string[]
+  modoPagamento?: 'PLATAFORMA' | 'DIRETO' | ''
   ordenacao?: 'relevancia' | 'avaliacao' | 'preco_asc' | 'preco_desc' | 'distancia'
   pagina?: number
   limite?: number
+  // Proximity search
+  cepAluno?: string
+  lat?: number
+  lon?: number
 }
 
 export interface AdminMetrics {

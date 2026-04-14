@@ -10,7 +10,7 @@ import { Search, SlidersHorizontal } from 'lucide-react'
 import type { PerfilInstrutor, FiltrosInstrutor } from '@/types'
 
 export default function BuscarPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [instrutores, setInstrutores] = useState<PerfilInstrutor[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +37,9 @@ export default function BuscarPage() {
     setLoading(true)
     const params = new URLSearchParams()
     Object.entries(filtros).forEach(([k, v]) => {
-      if (v !== undefined && v !== '') params.set(k, String(v))
+      // cepAluno is only used client-side for display; lat/lon are sent to the API
+      if (k === 'cepAluno') return
+      if (v !== undefined && v !== '' && v !== null) params.set(k, String(v))
     })
     if (query) params.set('q', query)
 
@@ -60,8 +62,14 @@ export default function BuscarPage() {
       <Navbar />
 
       {/* Search header */}
-      <div className="bg-white border-b border-gray-100 sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-3">
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-40 shadow-sm">
+        {/* Amber accent stripe */}
+        <div className="flex gap-3 px-6 h-1">
+          {[...Array(14)].map((_, i) => (
+            <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? 'bg-amber-400' : 'bg-amber-100'}`} />
+          ))}
+        </div>
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-3">
           <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus-within:border-green-400 transition-colors">
             <Search className="w-4 h-4 text-gray-400 shrink-0" />
             <input
@@ -69,7 +77,7 @@ export default function BuscarPage() {
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && fetchInstrutores()}
-              placeholder="Buscar por cidade, bairro ou nome..."
+              placeholder="Buscar por nome do instrutor..."
               className="flex-1 text-sm bg-transparent outline-none placeholder-gray-400"
             />
           </div>
@@ -78,7 +86,7 @@ export default function BuscarPage() {
           </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2.5 border-2 rounded-xl text-sm font-medium transition-colors ${showFilters ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 border-2 rounded-xl text-sm font-medium transition-colors ${showFilters ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filtros
@@ -100,7 +108,9 @@ export default function BuscarPage() {
                 <p className="text-sm font-semibold text-gray-900">
                   {loading ? 'Buscando...' : `${total} instrutores encontrados`}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">na sua região</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {filtros.lat ? 'próximos à sua localização' : 'na plataforma'}
+                </p>
               </div>
               <select
                 value={filtros.ordenacao}
@@ -123,9 +133,16 @@ export default function BuscarPage() {
               </div>
             ) : instrutores.length === 0 ? (
               <div className="text-center py-16">
-                <p className="text-5xl mb-4">🔍</p>
-                <h3 className="text-lg font-bold mb-2">Nenhum instrutor encontrado</h3>
-                <p className="text-sm text-gray-500">Tente ajustar os filtros ou buscar em outra cidade.</p>
+                <div className="inline-flex items-center justify-center w-16 h-16 mb-5 relative">
+                  <div className="absolute inset-0 rotate-45 rounded-2xl bg-amber-100 border-2 border-amber-200" />
+                  <Search className="relative z-10 w-7 h-7 text-amber-500" />
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-gray-900">Nenhum instrutor encontrado</h3>
+                <p className="text-sm text-gray-500">
+                  {filtros.lat
+                    ? 'Nenhum instrutor atende sua região. Tente aumentar a distância máxima ou remova o filtro de CEP.'
+                    : 'Digite seu CEP no painel de filtros para ver instrutores próximos a você.'}
+                </p>
               </div>
             ) : (
               <div className="flex flex-col gap-4">

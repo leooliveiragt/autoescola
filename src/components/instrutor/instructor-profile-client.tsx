@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Star, MapPin, Shield, ChevronLeft, Clock, Users, Award, Car } from 'lucide-react'
 import type { PerfilInstrutor, Avaliacao } from '@/types'
-import { formatCurrency, gerarIniciais, diasSemana } from '@/lib/utils'
+import { formatCurrency, gerarIniciais } from '@/lib/utils'
+
+const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 interface Props {
-  perfil: PerfilInstrutor & { user: any; disponibilidades: any[] }
+  perfil: PerfilInstrutor & { user: any; disponibilidades: any[]; veiculo?: any }
   avaliacoes: (Avaliacao & { autor: { nome: string } })[]
 }
 
@@ -39,9 +41,28 @@ export function InstructorProfileClient({ perfil, avaliacoes }: Props) {
   const colorIdx = perfil.userId.charCodeAt(0) % AVATAR_COLORS.length
   const color = AVATAR_COLORS[colorIdx]
   const iniciais = gerarIniciais(perfil.user?.nome || 'IN')
+
+  const isDireto = (perfil as any).modoRecebimento === 'DIRETO'
   const totalAula = perfil.precoPorHora * duration
-  const taxa = totalAula * 0.1
-  const total = totalAula + taxa
+
+  // Derive available hours for the selected date from real disponibilidades
+  const horariosDisponiveis = (() => {
+    if (!date) return []
+    const [ano, mes, dia] = date.split('-').map(Number)
+    const diaSemana = new Date(ano, mes - 1, dia).getDay()
+    const slots = perfil.disponibilidades?.filter((d: any) => d.diaSemana === diaSemana) ?? []
+    const horas: string[] = []
+    for (const slot of slots) {
+      // Use full string comparison so "16:00" < "16:30" correctly includes 16:00
+      for (let h = 0; h <= 23; h++) {
+        const label = `${h.toString().padStart(2, '0')}:00`
+        if (label >= slot.horaInicio && label < slot.horaFim) {
+          if (!horas.includes(label)) horas.push(label)
+        }
+      }
+    }
+    return horas.sort()
+  })()
 
   const endereco = perfil.user?.enderecos?.[0]
   const kycAprovado = perfil.user?.kyc?.status === 'APROVADO'
@@ -158,14 +179,50 @@ export function InstructorProfileClient({ perfil, avaliacoes }: Props) {
             <div className="p-6">
               {activeTab === 'sobre' && (
                 <div>
+                  {/* Bio */}
                   <p className="text-gray-600 text-sm leading-relaxed mb-5">{perfil.bio || 'Sem bio cadastrada.'}</p>
+
+                  {/* Especialidades */}
                   {perfil.especialidades?.length > 0 && (
-                    <div>
+                    <div className="mb-6">
                       <h3 className="text-sm font-bold text-gray-700 mb-3">Especialidades</h3>
                       <div className="flex flex-wrap gap-2">
                         {perfil.especialidades.map(e => (
                           <span key={e} className="text-xs px-3 py-1.5 rounded-full bg-green-50 text-green-800 border border-green-200 font-medium">{e}</span>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Veículo */}
+                  {perfil.veiculo && (
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-700 mb-3">Veículo de aula</h3>
+                      <div className="bg-gray-50 rounded-2xl p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
+                            <Car className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900">
+                              {perfil.veiculo.marca} {perfil.veiculo.modelo} {perfil.veiculo.ano}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {perfil.veiculo.cor} · Câmbio {perfil.veiculo.cambio}
+                              {perfil.veiculo.placa ? ` · ${perfil.veiculo.placa}` : ''}
+                            </p>
+                          </div>
+                        </div>
+
+                        {perfil.veiculo.opcionais?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {perfil.veiculo.opcionais.map((op: string) => (
+                              <span key={op} className="text-xs px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-600 font-medium">
+                                {op}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -197,17 +254,29 @@ export function InstructorProfileClient({ perfil, avaliacoes }: Props) {
 
               {activeTab === 'agenda' && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-4">Horários disponíveis esta semana:</p>
-                  <div className="grid grid-cols-7 gap-2">
-                    {diasSemana.map(d => (
-                      <div key={d} className="text-center text-xs font-bold text-gray-400 pb-1">{d}</div>
-                    ))}
-                    {perfil.disponibilidades?.map(disp => (
-                      <div key={disp.id} className="text-center text-xs py-2 bg-green-50 text-green-800 border border-green-200 rounded-lg font-medium cursor-pointer hover:bg-green-100 transition-colors">
-                        {disp.horaInicio}
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs text-gray-500 mb-4">Horários em que o instrutor costuma estar disponível:</p>
+                  {perfil.disponibilidades?.length === 0 ? (
+                    <p className="text-sm text-gray-400 py-4 text-center">Nenhuma disponibilidade cadastrada.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {DIAS_SEMANA.map((nome, idx) => {
+                        const slots = perfil.disponibilidades?.filter((d: any) => d.diaSemana === idx) ?? []
+                        if (slots.length === 0) return null
+                        return (
+                          <div key={nome} className="flex items-start gap-3">
+                            <span className="text-xs font-bold text-gray-500 w-8 pt-1.5 shrink-0">{nome}</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {slots.map((s: any) => (
+                                <span key={s.id} className="text-xs px-2.5 py-1 rounded-lg bg-green-50 text-green-800 border border-green-200 font-medium">
+                                  {s.horaInicio} – {s.horaFim}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -243,12 +312,18 @@ export function InstructorProfileClient({ perfil, avaliacoes }: Props) {
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Horário</label>
                 <select value={time} onChange={e => setTime(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-sm">
-                  <option value="">Selecione um horário</option>
-                  {['07:00','08:00','09:00','10:00','11:00','14:00','15:00','16:00','17:00','18:00'].map(h => (
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-sm"
+                  disabled={!date || horariosDisponiveis.length === 0}>
+                  <option value="">
+                    {!date ? 'Selecione uma data primeiro' : horariosDisponiveis.length === 0 ? 'Sem horários neste dia' : 'Selecione um horário'}
+                  </option>
+                  {horariosDisponiveis.map(h => (
                     <option key={h} value={h}>{h}</option>
                   ))}
                 </select>
+                {date && horariosDisponiveis.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">O instrutor não tem disponibilidade neste dia.</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">Duração</label>
@@ -266,26 +341,33 @@ export function InstructorProfileClient({ perfil, avaliacoes }: Props) {
                 <span>{duration}h × {formatCurrency(perfil.precoPorHora)}</span>
                 <span>{formatCurrency(totalAula)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>Taxa da plataforma (10%)</span>
-                <span>{formatCurrency(taxa)}</span>
-              </div>
               <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
                 <span>Total</span>
-                <span>{formatCurrency(total)}</span>
+                <span>{formatCurrency(totalAula)}</span>
               </div>
             </div>
+
+            {isDireto && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3 flex items-start gap-2">
+                <span className="text-sm">🤝</span>
+                <p className="text-xs text-amber-700 leading-snug">
+                  Pagamento direto com o instrutor — sem taxa da plataforma. Combine os detalhes com ele após agendar.
+                </p>
+              </div>
+            )}
 
             <button
               onClick={handleAgendar}
               disabled={!date || !time}
-              className="w-full py-3.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              className={`w-full py-3.5 font-bold rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-1 ${
+                isDireto ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
             >
-              Agendar e pagar
+              {isDireto ? 'Agendar' : 'Agendar e pagar'}
             </button>
 
             <p className="text-center text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
-              <span>🔒</span> Pagamento seguro via Stripe
+              {isDireto ? '🤝 Pagamento combinado diretamente com o instrutor' : '🔒 Pagamento seguro via Stripe'}
             </p>
           </div>
         </div>

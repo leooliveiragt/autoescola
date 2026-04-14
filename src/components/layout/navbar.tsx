@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
-import { Menu, X, ChevronDown, User, LogOut, Settings, LayoutDashboard } from 'lucide-react'
+import { Menu, X, ChevronDown, User, LogOut, Settings, LayoutDashboard, MessageSquare, Calendar } from 'lucide-react'
+import { AvaliacaoPrompt } from './avaliacao-prompt'
 
 export function Navbar() {
   const { data: session } = useSession()
@@ -11,6 +12,7 @@ export function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false)
 
   return (
+    <>
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
@@ -56,21 +58,39 @@ export function Navbar() {
                     <p className="text-sm font-semibold text-gray-900">{session.user.name}</p>
                     <p className="text-xs text-gray-500">{session.user.email}</p>
                   </div>
-                  <Link href="/buscar" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    <LayoutDashboard className="w-4 h-4" /> Buscar instrutores
-                  </Link>
-                  <Link href="/perfil" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    <User className="w-4 h-4" /> Meu perfil
-                  </Link>
-                  <Link href="/configuracoes" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    <Settings className="w-4 h-4" /> Configurações
-                  </Link>
-                  {session.user.role === 'ADMIN' && (
+                  {session.user.role === 'INSTRUTOR' ? (
+                    <>
+                      <Link href="/instrutor/dashboard" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <LayoutDashboard className="w-4 h-4" /> Painel do instrutor
+                      </Link>
+                      <Link href="/instrutor/aulas" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <Settings className="w-4 h-4" /> Minhas aulas
+                      </Link>
+                      <Link href="/instrutor/configuracoes" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <Settings className="w-4 h-4" /> Configurações
+                      </Link>
+                    </>
+                  ) : session.user.role === 'ADMIN' ? (
                     <Link href="/admin" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                       <LayoutDashboard className="w-4 h-4" /> Admin
                     </Link>
+                  ) : (
+                    <>
+                      <Link href="/buscar" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <LayoutDashboard className="w-4 h-4" /> Buscar instrutores
+                      </Link>
+                      <Link href="/aluno/aulas" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <Calendar className="w-4 h-4" /> Minhas aulas
+                      </Link>
+                      <Link href="/perfil" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <User className="w-4 h-4" /> Meu perfil
+                      </Link>
+                    </>
                   )}
                   <div className="border-t border-gray-100 mt-1 pt-1">
+                    <Link href="/suporte" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                      <MessageSquare className="w-4 h-4" /> Suporte
+                    </Link>
                     <button
                       onClick={() => signOut({ callbackUrl: '/' })}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
@@ -122,5 +142,7 @@ export function Navbar() {
         </div>
       )}
     </nav>
+    <AvaliacaoPrompt />
+    </>
   )
 }

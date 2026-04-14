@@ -22,7 +22,8 @@ export default async function InstructorProfilePage({ params }: Props) {
           kyc: true,
         },
       },
-      disponibilidades: { where: { ativo: true } },
+      disponibilidades: { where: { ativo: true }, orderBy: [{ diaSemana: 'asc' }, { horaInicio: 'asc' }] },
+      veiculo: true,
     },
   })
 

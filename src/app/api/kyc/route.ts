@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { buscarCEP } from '@/lib/cep'
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -27,6 +28,11 @@ export async function POST(req: NextRequest) {
 
     // Create/update address
     if (cidade || cep) {
+      // Geocode CEP to get coordinates
+      const cepData = cep ? await buscarCEP(cep) : null
+      const lat = cepData?.lat ?? null
+      const lng = cepData?.lng ?? null
+
       const existingAddr = await prisma.endereco.findFirst({
         where: { userId: session.user.id, principal: true },
       })
@@ -34,7 +40,7 @@ export async function POST(req: NextRequest) {
       if (existingAddr) {
         await prisma.endereco.update({
           where: { id: existingAddr.id },
-          data: { cep, logradouro, numero, bairro, cidade, estado },
+          data: { cep, logradouro, numero, bairro, cidade, estado, lat, lng },
         })
       } else {
         await prisma.endereco.create({
@@ -46,6 +52,8 @@ export async function POST(req: NextRequest) {
             bairro: bairro || '',
             cidade: cidade || '',
             estado: estado || '',
+            lat,
+            lng,
             principal: true,
           },
         })
@@ -78,7 +86,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 

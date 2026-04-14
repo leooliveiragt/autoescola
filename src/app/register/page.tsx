@@ -59,6 +59,13 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      {/* Amber top accent */}
+      <div className="fixed top-0 left-0 right-0 flex gap-3 h-1.5 z-50">
+        {[...Array(20)].map((_, i) => (
+          <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? 'bg-amber-400' : 'bg-amber-100'}`} />
+        ))}
+      </div>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-2xl font-extrabold tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans' }}>

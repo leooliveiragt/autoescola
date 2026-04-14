@@ -68,7 +68,7 @@ export function InstructorCard({ instrutor }: Props) {
               <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
                 <MapPin className="w-3 h-3" />
                 <span>{instrutor.user?.enderecos?.[0]?.cidade}</span>
-                {instrutor.distanciaKm !== undefined && (
+                {instrutor.distanciaKm != null && (
                   <span className="text-gray-400">· {instrutor.distanciaKm.toFixed(1)} km</span>
                 )}
               </div>
@@ -109,7 +109,7 @@ export function InstructorCard({ instrutor }: Props) {
           <div className="text-right">
             <div className="text-xl font-extrabold text-gray-900">{formatCurrency(instrutor.precoPorHora)}</div>
             <div className="text-xs text-gray-400">por hora</div>
-            {instrutor.distanciaKm !== undefined && (
+            {instrutor.distanciaKm != null && (
               <div className="text-xs text-gray-400 mt-1">{instrutor.distanciaKm.toFixed(1)} km de você</div>
             )}
           </div>

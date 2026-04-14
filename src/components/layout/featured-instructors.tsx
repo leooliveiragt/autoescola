@@ -1,17 +1,18 @@
 import Link from 'next/link'
-import { Star, MapPin } from 'lucide-react'
+import { Star, MapPin, ShieldCheck } from 'lucide-react'
+import { Tyre } from './driving-icons'
 
 const FEATURED = [
-  { initials: 'JS', name: 'Juliana Santos', cidade: 'São José dos Campos', dist: '1,5 km', rating: 4.9, reviews: 22, price: 130, genero: 'F', bg: 'bg-pink-100', text: 'text-pink-800', tags: ['Iniciantes', 'Automático', 'Ansiedade'], top: true },
-  { initials: 'CM', name: 'Carlos Mendes', cidade: 'São José dos Campos', dist: '3,2 km', rating: 4.9, reviews: 47, price: 120, genero: 'M', bg: 'bg-green-100', text: 'text-green-800', tags: ['Baliza', 'Manual', 'Aprovação garantida'], top: true },
-  { initials: 'FR', name: 'Fernanda Rocha', cidade: 'Taubaté', dist: '9,1 km', rating: 4.8, reviews: 31, price: 95, genero: 'F', bg: 'bg-purple-100', text: 'text-purple-800', tags: ['CNH-B', 'Prova prática', 'Jovens'], top: false },
-  { initials: 'RA', name: 'Roberto Alves', cidade: 'Jacareí', dist: '7,4 km', rating: 4.7, reviews: 58, price: 110, genero: 'M', bg: 'bg-blue-100', text: 'text-blue-800', tags: ['Estrada', 'Manual', 'Veterano'], top: false },
+  { initials: 'JS', name: 'Juliana Santos', cidade: 'São José dos Campos', dist: '1,5 km', rating: 4.9, reviews: 22, price: 130, genero: 'F', bg: 'bg-pink-100', text: 'text-pink-700', tags: ['Iniciantes', 'Automático', 'Ansiedade'], top: true },
+  { initials: 'CM', name: 'Carlos Mendes', cidade: 'São José dos Campos', dist: '3,2 km', rating: 4.9, reviews: 47, price: 120, genero: 'M', bg: 'bg-green-100', text: 'text-green-700', tags: ['Baliza', 'Manual', 'Aprovação garantida'], top: true },
+  { initials: 'FR', name: 'Fernanda Rocha', cidade: 'Taubaté', dist: '9,1 km', rating: 4.8, reviews: 31, price: 95, genero: 'F', bg: 'bg-purple-100', text: 'text-purple-700', tags: ['CNH-B', 'Prova prática', 'Jovens'], top: false },
+  { initials: 'RA', name: 'Roberto Alves', cidade: 'Jacareí', dist: '7,4 km', rating: 4.7, reviews: 58, price: 110, genero: 'M', bg: 'bg-blue-100', text: 'text-blue-700', tags: ['Estrada', 'Manual', 'Veterano'], top: false },
 ]
 
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
-      {[1,2,3,4,5].map(i => (
+      {[1, 2, 3, 4, 5].map(i => (
         <Star key={i} className={`w-3.5 h-3.5 ${i <= Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'}`} />
       ))}
     </div>
@@ -20,36 +21,50 @@ function StarRating({ rating }: { rating: number }) {
 
 export function FeaturedInstructors() {
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-end justify-between mb-12">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-green-600">Instrutores</span>
-            <h2 className="text-4xl font-extrabold tracking-tight mt-2" style={{ fontFamily: 'Plus Jakarta Sans' }}>Os mais bem avaliados</h2>
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-600">Instrutores</span>
+            <h2 className="text-4xl font-extrabold tracking-tight mt-2 text-gray-900" style={{ fontFamily: 'Plus Jakarta Sans' }}>
+              Os mais bem avaliados
+            </h2>
             <p className="text-gray-500 mt-2 text-sm">Cadastre-se para ver todos os instrutores na sua região</p>
           </div>
-          <Link href="/register" className="hidden md:block text-sm font-semibold text-green-600 hover:text-green-700 border-b border-green-300 pb-0.5">
-            Ver todos →
-          </Link>
+
+          {/* Spinning tyre decoration */}
+          <div className="hidden md:flex items-center gap-4">
+            <Tyre
+              className="w-10 h-10 text-gray-300 animate-spin"
+              style={{ animationDuration: '4s' }}
+            />
+            <Link href="/register" className="text-sm font-semibold text-green-600 hover:text-green-700 border-b border-green-300 pb-0.5">
+              Ver todos →
+            </Link>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
           {FEATURED.map((inst) => (
-            <Link href="/login" key={inst.initials} className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-green-300 hover:shadow-md transition-all group block">
+            <Link href="/login" key={inst.initials} className="bg-white rounded-2xl border-2 border-gray-100 p-5 hover:border-green-400 hover:shadow-md transition-all group block">
               <div className="flex items-start justify-between mb-4">
                 <div className={`w-14 h-14 rounded-2xl ${inst.bg} ${inst.text} flex items-center justify-center font-bold text-lg`}>
                   {inst.initials}
                 </div>
-                {inst.top && (
+                {inst.top ? (
                   <span className="text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
                     ★ Destaque
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-0.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                    <ShieldCheck className="w-3 h-3" /> KYC
                   </span>
                 )}
               </div>
 
               <h3 className="font-bold text-gray-900 text-sm mb-1">{inst.name}</h3>
               <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-                <MapPin className="w-3 h-3" />
+                <MapPin className="w-3 h-3 text-gray-400" />
                 {inst.cidade} · {inst.dist}
               </div>
 
@@ -79,7 +94,7 @@ export function FeaturedInstructors() {
         </div>
 
         <div className="text-center mt-10">
-          <Link href="/register" className="inline-block px-8 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors text-sm">
+          <Link href="/register" className="inline-block px-8 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors text-sm shadow-sm">
             Cadastre-se e veja todos os instrutores
           </Link>
         </div>

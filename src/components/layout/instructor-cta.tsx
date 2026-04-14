@@ -1,32 +1,88 @@
 import Link from 'next/link'
+import { SteeringWheel, TrafficCone, Tyre } from './driving-icons'
 
 export function InstructorCTA() {
   return (
-    <section className="py-20 bg-green-600">
-      <div className="max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-4xl font-extrabold text-white tracking-tight mb-4" style={{ fontFamily: 'Plus Jakarta Sans' }}>
+    <section className="relative py-20 bg-white overflow-hidden">
+      {/* Amber road stripe top */}
+      <div className="absolute top-0 left-0 right-0 flex gap-3 h-2">
+        {[...Array(30)].map((_, i) => (
+          <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? 'bg-amber-400' : 'bg-amber-100'}`} />
+        ))}
+      </div>
+      {/* Amber road stripe bottom */}
+      <div className="absolute bottom-0 left-0 right-0 flex gap-3 h-2">
+        {[...Array(30)].map((_, i) => (
+          <div key={i} className={`flex-1 h-full ${i % 2 === 0 ? 'bg-amber-400' : 'bg-amber-100'}`} />
+        ))}
+      </div>
+
+      {/* Traffic cones — corners */}
+      <div className="absolute bottom-4 left-6 hidden lg:block opacity-30">
+        <TrafficCone className="w-10 h-14" />
+      </div>
+      <div className="absolute bottom-4 left-20 hidden lg:block opacity-15">
+        <TrafficCone className="w-7 h-10" />
+      </div>
+      <div className="absolute bottom-4 right-6 hidden lg:block opacity-30">
+        <TrafficCone className="w-10 h-14" />
+      </div>
+      <div className="absolute bottom-4 right-20 hidden lg:block opacity-15">
+        <TrafficCone className="w-7 h-10" />
+      </div>
+
+      {/* Tyres — far corners */}
+      <div className="absolute top-8 left-8 hidden xl:block opacity-8">
+        <Tyre
+          className="w-20 h-20 text-gray-300 animate-spin"
+          style={{ animationDuration: '7s' }}
+        />
+      </div>
+      <div className="absolute top-8 right-8 hidden xl:block opacity-8">
+        <Tyre
+          className="w-20 h-20 text-gray-300 animate-spin"
+          style={{ animationDuration: '7s', animationDirection: 'reverse' }}
+        />
+      </div>
+
+      <div className="relative max-w-4xl mx-auto px-6 text-center">
+        {/* Steering wheel badge */}
+        <div className="inline-flex items-center justify-center w-16 h-16 mb-6 relative">
+          <div className="absolute inset-0 rotate-45 rounded-2xl bg-amber-400" />
+          <SteeringWheel className="relative z-10 w-8 h-8 text-gray-900" />
+        </div>
+
+        <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-4" style={{ fontFamily: 'Plus Jakarta Sans' }}>
           Você é instrutor de direção?
         </h2>
-        <p className="text-green-100 text-base mb-8 max-w-lg mx-auto leading-relaxed">
-          Crie seu perfil gratuitamente, defina seu preço e alcance alunos na sua região. A nova lei facilita seu trabalho como autônomo.
+        <p className="text-gray-500 text-base mb-8 max-w-lg mx-auto leading-relaxed">
+          Crie seu perfil, defina seu preço e alcance alunos na sua região. A nova lei facilita seu trabalho como autônomo.
         </p>
+
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/register?role=instrutor" className="px-8 py-3.5 bg-white text-green-700 font-bold rounded-xl hover:bg-green-50 transition-colors text-sm">
+          <Link
+            href="/register?role=instrutor"
+            className="px-8 py-3.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors text-sm shadow-sm"
+          >
             Criar meu perfil de instrutor
           </Link>
-          <Link href="/para-instrutores" className="px-8 py-3.5 border-2 border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors text-sm">
+          <Link
+            href="/para-instrutores"
+            className="px-8 py-3.5 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors text-sm"
+          >
             Saber mais
           </Link>
         </div>
-        <div className="flex justify-center gap-8 mt-10 pt-8 border-t border-green-500">
+
+        <div className="flex justify-center gap-8 mt-10 pt-8 border-t border-gray-100">
           {[
             { val: 'R$0', label: 'Para criar o perfil' },
-            { val: '85%', label: 'Você fica de cada aula' },
+            { val: '90%', label: 'Você fica de cada aula' },
             { val: 'R$49/mês', label: 'Plano mensal' },
           ].map(s => (
             <div key={s.label}>
-              <div className="text-2xl font-extrabold text-white">{s.val}</div>
-              <div className="text-xs text-green-200 mt-0.5">{s.label}</div>
+              <div className="text-2xl font-extrabold text-amber-500">{s.val}</div>
+              <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
             </div>
           ))}
         </div>
