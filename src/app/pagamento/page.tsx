@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Loader2, Lock, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
 
-export default function PagamentoPage() {
+function PagamentoContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = useSession()
@@ -162,4 +162,8 @@ export default function PagamentoPage() {
       </div>
     </div>
   )
+}
+
+export default function PagamentoPage() {
+  return <Suspense><PagamentoContent /></Suspense>
 }

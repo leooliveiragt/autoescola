@@ -12,11 +12,13 @@ import {
   LogOut,
   Car,
   FileText,
+  TrendingUp,
 } from 'lucide-react'
 
 const links = [
   { href: '/instrutor/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/instrutor/aulas', label: 'Minhas aulas', icon: CalendarDays },
+  { href: '/instrutor/financeiro', label: 'Financeiro', icon: TrendingUp },
   { href: '/instrutor/perfil', label: 'Meu perfil', icon: User },
   { href: '/instrutor/veiculo', label: 'Meu veículo', icon: Car },
   { href: '/instrutor/documentos', label: 'Documentos', icon: FileText },

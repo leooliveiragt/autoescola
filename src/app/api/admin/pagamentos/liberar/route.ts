@@ -21,12 +21,10 @@ export async function GET() {
 
   const aulas = await prisma.aula.findMany({
     where: {
-      status: 'CONFIRMADA',
+      status: { in: ['CONFIRMADA', 'REALIZADA'] },
       pagamentoLiberadoEm: null,
+      modoPagamento: 'PLATAFORMA',
       data: { gte: inicioSemanaPassada, lte: fimSemanaPassada },
-      instrutor: {
-        perfilInstrutor: { modoRecebimento: 'PLATAFORMA' } as any,
-      },
     },
     include: {
       aluno: { select: { nome: true } },

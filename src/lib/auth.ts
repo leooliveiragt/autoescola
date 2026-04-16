@@ -28,7 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
-          include: { kyc: true, perfilInstrutor: true },
+          include: { kyc: true },
         })
 
         if (!user || !user.senha) return null
@@ -40,10 +40,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!senhaValida) return null
         if (!user.ativo) throw new Error('BLOQUEADO')
-
-        const kycStatus = user.kyc?.status ?? null
-        if (kycStatus === 'PENDENTE' || kycStatus === 'EM_ANALISE') throw new Error('EM_ANALISE')
-        if (kycStatus === 'REJEITADO') throw new Error('REJEITADO')
 
         return {
           id: user.id,

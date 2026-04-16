@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Star, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { gerarIniciais } from '@/lib/utils'
 
-export default function AvaliarPage() {
+function AvaliarContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const aulaId = searchParams.get('aulaId') || ''
@@ -125,4 +125,8 @@ export default function AvaliarPage() {
       </div>
     </div>
   )
+}
+
+export default function AvaliarPage() {
+  return <Suspense><AvaliarContent /></Suspense>
 }

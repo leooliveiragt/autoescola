@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Loader2, GraduationCap, Car } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultRole = searchParams.get('role') === 'instrutor' ? 'INSTRUTOR' : 'ALUNO'
@@ -192,4 +192,8 @@ export default function RegisterPage() {
       </div>
     </div>
   )
+}
+
+export default function RegisterPage() {
+  return <Suspense><RegisterContent /></Suspense>
 }
