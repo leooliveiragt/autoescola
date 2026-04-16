@@ -27,12 +27,16 @@ export function Navbar() {
           <Link href="/como-funciona" className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
             Como funciona
           </Link>
-          <Link href="/para-instrutores" className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
-            Para instrutores
-          </Link>
-          <Link href="/precos" className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
-            Preços
-          </Link>
+          {session?.user.role !== 'ALUNO' && (
+            <>
+              <Link href="/para-instrutores" className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
+                Para instrutores
+              </Link>
+              <Link href="/precos" className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
+                Preços
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Right side */}
@@ -131,8 +135,12 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-6 py-4 flex flex-col gap-2">
           <Link href="/como-funciona" className="py-2 text-sm text-gray-700">Como funciona</Link>
-          <Link href="/para-instrutores" className="py-2 text-sm text-gray-700">Para instrutores</Link>
-          <Link href="/precos" className="py-2 text-sm text-gray-700">Preços</Link>
+          {session?.user.role !== 'ALUNO' && (
+            <>
+              <Link href="/para-instrutores" className="py-2 text-sm text-gray-700">Para instrutores</Link>
+              <Link href="/precos" className="py-2 text-sm text-gray-700">Preços</Link>
+            </>
+          )}
           {!session && (
             <>
               <Link href="/login" className="py-2 text-sm font-medium text-gray-700 border-t border-gray-100 mt-2 pt-4">Entrar</Link>

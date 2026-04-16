@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, AlertTriangle, Lock } from 'lucide-react'
+import { CheckCircle, Lock, Search } from 'lucide-react'
 
 export function AdminLiberarPagamentosClient({ aulas, semanaInicio, semanaFim }: { aulas: any[], semanaInicio: string, semanaFim: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
+  const [busca, setBusca] = useState('')
+  const [filtroVis, setFiltroVis] = useState<'TODOS' | 'PENDENTES' | 'LIBERADOS' | 'RETIDOS'>('TODOS')
 
   const fmt = (iso: string) => new Date(iso).toLocaleDateString('pt-BR')
   const fmtMoeda = (v: number) => `R$${v.toFixed(2).replace('.', ',')}`
@@ -26,16 +28,67 @@ export function AdminLiberarPagamentosClient({ aulas, semanaInicio, semanaFim }:
     }
   }
 
-  const pendentes = aulas.filter(a => !a.reclamacao || a.reclamacao.status === 'RESOLVIDA')
-  const retidos = aulas.filter(a => a.reclamacao && (a.reclamacao.status === 'ABERTA' || a.reclamacao.status === 'EM_ANALISE'))
+  const aulasFiltradas = aulas.filter(a => {
+    if (busca) {
+      const q = busca.toLowerCase()
+      if (!a.instrutor.nome?.toLowerCase().includes(q) && !a.aluno.nome?.toLowerCase().includes(q)) return false
+    }
+    const eRetido = a.reclamacao && (a.reclamacao.status === 'ABERTA' || a.reclamacao.status === 'EM_ANALISE')
+    const eLiberado = !!a.pagamentoLiberadoEm
+    const ePendente = !eRetido && !eLiberado
+    if (filtroVis === 'PENDENTES' && !ePendente) return false
+    if (filtroVis === 'LIBERADOS' && !eLiberado) return false
+    if (filtroVis === 'RETIDOS' && !eRetido) return false
+    return true
+  })
+  const pendentes = aulasFiltradas.filter(a => !a.pagamentoLiberadoEm && (!a.reclamacao || a.reclamacao.status === 'RESOLVIDA'))
+  const liberados = aulasFiltradas.filter(a => !!a.pagamentoLiberadoEm)
+  const retidos = aulasFiltradas.filter(a => a.reclamacao && (a.reclamacao.status === 'ABERTA' || a.reclamacao.status === 'EM_ANALISE'))
   const totalPendente = pendentes.reduce((s, a) => s + a.totalPago, 0)
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-extrabold mb-1" style={{ fontFamily: 'Plus Jakarta Sans' }}>Liberação de pagamentos</h1>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 mb-4">
         Semana de {fmt(semanaInicio)} a {fmt(semanaFim)} · Liberações ocorrem às quartas-feiras da semana seguinte às aulas.
       </p>
+
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar por instrutor ou aluno..."
+            className="pl-9 pr-4 py-2 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-sm w-72"
+          />
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          {([
+            ['TODOS',    'Todos',      ''],
+            ['PENDENTES','Pendentes',  'text-amber-600'],
+            ['LIBERADOS','Liberados',  'text-green-600'],
+            ['RETIDOS',  'Retidos',    'text-red-600'],
+          ] as const).map(([val, label, color]) => (
+            <button
+              key={val}
+              onClick={() => setFiltroVis(val)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                filtroVis === val ? 'bg-green-600 text-white' : `bg-gray-100 ${color || 'text-gray-600'} hover:bg-gray-200`
+              }`}
+            >
+              {label}
+              {val === 'PENDENTES' && pendentes.length > 0 && filtroVis !== 'PENDENTES' && (
+                <span className="ml-1 bg-amber-100 text-amber-700 rounded-full px-1.5">{pendentes.length}</span>
+              )}
+              {val === 'RETIDOS' && retidos.length > 0 && filtroVis !== 'RETIDOS' && (
+                <span className="ml-1 bg-red-100 text-red-700 rounded-full px-1.5">{retidos.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
@@ -52,7 +105,39 @@ export function AdminLiberarPagamentosClient({ aulas, semanaInicio, semanaFim }:
         </div>
       </div>
 
-      {retidos.length > 0 && (
+      {liberados.length > 0 && (filtroVis === 'TODOS' || filtroVis === 'LIBERADOS') && (
+        <div className="mb-6">
+          <h2 className="text-sm font-bold text-green-700 mb-3 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" /> Repasses já liberados ({liberados.length})
+          </h2>
+          <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-green-50 border-b border-green-100">
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-green-700 uppercase tracking-wide">Instrutor</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-green-700 uppercase tracking-wide">Aluno</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-green-700 uppercase tracking-wide">Data aula</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-green-700 uppercase tracking-wide">Total pago</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-green-700 uppercase tracking-wide">Liberado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                {liberados.map(a => (
+                  <tr key={a.id} className="border-t border-green-50">
+                    <td className="px-5 py-3 font-medium">{a.instrutor.nome}</td>
+                    <td className="px-5 py-3 text-gray-500">{a.aluno.nome}</td>
+                    <td className="px-5 py-3 text-gray-500 text-xs">{new Date(a.data).toLocaleDateString('pt-BR')}</td>
+                    <td className="px-5 py-3 font-semibold text-gray-900">{fmtMoeda(a.totalPago)}</td>
+                    <td className="px-5 py-3 text-xs text-green-700 font-semibold">{fmt(a.pagamentoLiberadoEm)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {retidos.length > 0 && (filtroVis === 'TODOS' || filtroVis === 'RETIDOS') && (
         <div className="mb-6">
           <h2 className="text-sm font-bold text-red-600 mb-3 flex items-center gap-2">
             <Lock className="w-4 h-4" /> Pagamentos retidos por reclamação
@@ -87,6 +172,7 @@ export function AdminLiberarPagamentosClient({ aulas, semanaInicio, semanaFim }:
         </div>
       )}
 
+      {(filtroVis === 'TODOS' || filtroVis === 'PENDENTES') && (
       <div>
         <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
           <CheckCircle className="w-4 h-4 text-green-600" /> Prontos para liberar
@@ -141,8 +227,9 @@ export function AdminLiberarPagamentosClient({ aulas, semanaInicio, semanaFim }:
           </div>
         )}
       </div>
+      )}
 
-      {pendentes.length > 1 && (
+      {(filtroVis === 'TODOS' || filtroVis === 'PENDENTES') && pendentes.length > 1 && (
         <button
           onClick={() => pendentes.forEach(a => handleLiberar(a.id))}
           className="mt-4 flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors text-sm"

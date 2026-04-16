@@ -198,16 +198,21 @@ export default function InstructorConfigPage() {
 
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Chave PIX para repasse</label>
-            <p className="text-xs text-gray-400 mb-2">Usada pela plataforma para transferir seus ganhos. Pode ser CPF, e-mail, telefone ou chave aleatória.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
+              <p className="text-xs text-blue-800 font-semibold mb-1">Atenção — requisito obrigatório</p>
+              <p className="text-xs text-blue-700 leading-relaxed">
+                A chave PIX cadastrada <strong>deve estar no seu nome</strong> — CPF, e-mail, telefone ou chave aleatória, desde que a conta pertença a você. Repasses enviados para chaves de terceiros serão bloqueados.
+              </p>
+            </div>
             <input
               type="text"
               value={pixChave}
               onChange={e => setPixChave(e.target.value)}
-              placeholder="Ex: 11999999999 ou seu@email.com"
+              placeholder="Ex: 000.000.000-00 (CPF) ou seu@email.com"
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-sm"
             />
             {!pixChave && (
-              <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-amber-600 mt-1.5">
                 ⚠️ Sem chave PIX cadastrada você não poderá receber repasses da plataforma.
               </p>
             )}

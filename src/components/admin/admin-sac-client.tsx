@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Send, MessageCircle } from 'lucide-react'
+import { X, Send, MessageCircle, Search } from 'lucide-react'
 
 const STATUS_MAP: Record<string, string> = {
   ABERTO: 'bg-amber-50 text-amber-700',
@@ -19,6 +19,17 @@ export function AdminSACClient({ tickets }: { tickets: any[] }) {
   const [selected, setSelected] = useState<any>(null)
   const [resposta, setResposta] = useState('')
   const [sending, setSending] = useState(false)
+  const [busca, setBusca] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('')
+  const [filtroTipo, setFiltroTipo] = useState('')
+
+  const filtrados = tickets.filter(t => {
+    const q = busca.toLowerCase()
+    if (q && !t.autor.nome.toLowerCase().includes(q) && !t.titulo.toLowerCase().includes(q)) return false
+    if (filtroStatus && t.status !== filtroStatus) return false
+    if (filtroTipo && t.autor.role !== filtroTipo) return false
+    return true
+  })
 
   async function handleResponder() {
     if (!resposta.trim()) return
@@ -59,6 +70,40 @@ export function AdminSACClient({ tickets }: { tickets: any[] }) {
             <span className="ml-3 text-base font-semibold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">{abertos} em aberto</span>
           )}
         </h1>
+        <span className="text-sm text-gray-400">{filtrados.length} de {tickets.length}</span>
+      </div>
+
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar por nome ou assunto..."
+            className="pl-9 pr-4 py-2 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-sm w-60"
+          />
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-500 font-semibold">Status:</span>
+          {[['', 'Todos'], ['ABERTO', 'Aberto'], ['EM_ATENDIMENTO', 'Em atendimento'], ['RESOLVIDO', 'Resolvido'], ['FECHADO', 'Fechado']].map(([val, label]) => (
+            <button key={val} onClick={() => setFiltroStatus(val)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filtroStatus === val ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-500 font-semibold">Tipo:</span>
+          {[['', 'Todos'], ['ALUNO', 'Aluno'], ['INSTRUTOR', 'Instrutor']].map(([val, label]) => (
+            <button key={val} onClick={() => setFiltroTipo(val)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filtroTipo === val ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
@@ -74,10 +119,10 @@ export function AdminSACClient({ tickets }: { tickets: any[] }) {
             </tr>
           </thead>
           <tbody>
-            {tickets.length === 0 && (
-              <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400">Nenhum ticket aberto.</td></tr>
+            {filtrados.length === 0 && (
+              <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400">Nenhum ticket encontrado.</td></tr>
             )}
-            {tickets.map(t => (
+            {filtrados.map(t => (
               <tr key={t.id} className="border-t border-gray-50 hover:bg-gray-50">
                 <td className="px-5 py-3">
                   <div className="font-medium text-gray-900">{t.autor.nome}</div>
