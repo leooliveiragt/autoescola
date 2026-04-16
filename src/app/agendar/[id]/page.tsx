@@ -16,15 +16,18 @@ export default async function AgendarPage({ params, searchParams }: Props) {
   const { data, hora, duracao } = searchParams
   if (!data || !hora || !duracao) redirect(`/instrutor/${params.id}`)
 
-  const perfil = await prisma.perfilInstrutor.findUnique({
-    where: { id: params.id },
-    include: {
-      user: {
-        select: { nome: true, avatarUrl: true, genero: true, telefone: true },
+  const [perfil, configPix] = await Promise.all([
+    prisma.perfilInstrutor.findUnique({
+      where: { id: params.id },
+      include: {
+        user: {
+          select: { nome: true, avatarUrl: true, genero: true, telefone: true },
+        },
+        veiculo: true,
       },
-      veiculo: true,
-    },
-  })
+    }),
+    prisma.configuracao.findUnique({ where: { chave: 'pix_chave' } }),
+  ])
 
   if (!perfil || !perfil.visivel) notFound()
 
@@ -33,6 +36,7 @@ export default async function AgendarPage({ params, searchParams }: Props) {
       <Navbar />
       <AgendarClient
         perfilId={params.id}
+        pixChave={configPix?.valor ?? ''}
         instrutor={{
           nome: perfil.user.nome,
           avatarUrl: perfil.user.avatarUrl ?? null,

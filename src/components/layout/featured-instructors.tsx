@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import { Star, MapPin, ShieldCheck } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { Tyre } from './driving-icons'
 
 const FEATURED = [
@@ -20,6 +23,16 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export function FeaturedInstructors() {
+  const { data: session } = useSession()
+  const role = session?.user?.role
+  const buscar = role === 'INSTRUTOR'
+    ? '/instrutor/dashboard'
+    : role === 'ADMIN'
+    ? '/admin'
+    : session
+    ? '/buscar'
+    : '/login?redirect=/buscar'
+
   return (
     <section className="py-20 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
@@ -38,7 +51,7 @@ export function FeaturedInstructors() {
               className="w-10 h-10 text-gray-300 animate-spin"
               style={{ animationDuration: '4s' }}
             />
-            <Link href="/register" className="text-sm font-semibold text-green-600 hover:text-green-700 border-b border-green-300 pb-0.5">
+            <Link href={buscar} className="text-sm font-semibold text-green-600 hover:text-green-700 border-b border-green-300 pb-0.5">
               Ver todos →
             </Link>
           </div>
@@ -46,7 +59,7 @@ export function FeaturedInstructors() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
           {FEATURED.map((inst) => (
-            <Link href="/login" key={inst.initials} className="bg-white rounded-2xl border-2 border-gray-100 p-5 hover:border-green-400 hover:shadow-md transition-all group block">
+            <Link href={buscar} key={inst.initials} className="bg-white rounded-2xl border-2 border-gray-100 p-5 hover:border-green-400 hover:shadow-md transition-all group block">
               <div className="flex items-start justify-between mb-4">
                 <div className={`w-14 h-14 rounded-2xl ${inst.bg} ${inst.text} flex items-center justify-center font-bold text-lg`}>
                   {inst.initials}
@@ -94,8 +107,8 @@ export function FeaturedInstructors() {
         </div>
 
         <div className="text-center mt-10">
-          <Link href="/register" className="inline-block px-8 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors text-sm shadow-sm">
-            Cadastre-se e veja todos os instrutores
+          <Link href={buscar} className="inline-block px-8 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors text-sm shadow-sm">
+            {role === 'INSTRUTOR' ? 'Ir para meu painel' : session ? 'Ver todos os instrutores' : 'Cadastre-se e veja todos os instrutores'}
           </Link>
         </div>
       </div>

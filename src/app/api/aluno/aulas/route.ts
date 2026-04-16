@@ -6,6 +6,18 @@ export async function GET() {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
+  const agora = new Date()
+
+  // Auto-marcar como REALIZADA aulas passadas que ainda estão AGENDADA/CONFIRMADA
+  await prisma.aula.updateMany({
+    where: {
+      alunoId: session.user.id,
+      status: { in: ['AGENDADA', 'CONFIRMADA'] },
+      data: { lt: agora },
+    },
+    data: { status: 'REALIZADA' },
+  })
+
   const aulas = await prisma.aula.findMany({
     where: { alunoId: session.user.id },
     include: {

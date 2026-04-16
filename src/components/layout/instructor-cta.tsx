@@ -1,7 +1,20 @@
+'use client'
+
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { SteeringWheel, TrafficCone, Tyre } from './driving-icons'
 
 export function InstructorCTA() {
+  const { data: session } = useSession()
+  const role = session?.user?.role
+
+  const ctaHref = role === 'INSTRUTOR'
+    ? '/instrutor/dashboard'
+    : '/register?role=instrutor'
+
+  const ctaLabel = role === 'INSTRUTOR'
+    ? 'Ir para meu painel'
+    : 'Criar meu perfil de instrutor'
   return (
     <section className="relative py-20 bg-white overflow-hidden">
       {/* Amber road stripe top */}
@@ -61,17 +74,19 @@ export function InstructorCTA() {
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/register?role=instrutor"
+            href={ctaHref}
             className="px-8 py-3.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors text-sm shadow-sm"
           >
-            Criar meu perfil de instrutor
+            {ctaLabel}
           </Link>
-          <Link
-            href="/para-instrutores"
-            className="px-8 py-3.5 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors text-sm"
-          >
-            Saber mais
-          </Link>
+          {role !== 'INSTRUTOR' && (
+            <Link
+              href="/para-instrutores"
+              className="px-8 py-3.5 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors text-sm"
+            >
+              Saber mais
+            </Link>
+          )}
         </div>
 
         <div className="flex justify-center gap-8 mt-10 pt-8 border-t border-gray-100">

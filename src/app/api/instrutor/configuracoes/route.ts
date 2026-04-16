@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
-  const { precoPorHora, bio, raioAtendimentoKm, modoRecebimento } = await req.json()
+  const { precoPorHora, bio, raioAtendimentoKm, modoRecebimento, pixChave } = await req.json()
 
   const perfil = await prisma.perfilInstrutor.update({
     where: { userId: session.user.id },
@@ -17,7 +17,8 @@ export async function PATCH(req: NextRequest) {
       ...(bio !== undefined && { bio }),
       ...(raioAtendimentoKm && { raioAtendimentoKm }),
       ...(modoRecebimento && { modoRecebimento }),
-    },
+      ...(pixChave !== undefined && { pixChave: pixChave || null }),
+    } as any,
   })
 
   return NextResponse.json(perfil)

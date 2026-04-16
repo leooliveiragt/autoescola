@@ -117,7 +117,6 @@ export interface FiltrosInstrutor {
   precoMaximo?: number
   distanciaMaximaKm?: number
   especialidades?: string[]
-  modoPagamento?: 'PLATAFORMA' | 'DIRETO' | ''
   ordenacao?: 'relevancia' | 'avaliacao' | 'preco_asc' | 'preco_desc' | 'distancia'
   pagina?: number
   limite?: number

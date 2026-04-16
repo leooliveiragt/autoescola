@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Calendar, Users, Star, DollarSign, Settings, Eye, CalendarDays, AlertTriangle, CreditCard } from 'lucide-react'
+import { Calendar, Users, Star, DollarSign, Settings, Eye, CalendarDays, AlertTriangle, CreditCard, TrendingDown } from 'lucide-react'
 
 export default function InstructorDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [sub, setSub] = useState<any>(null)
   const [subLoaded, setSubLoaded] = useState(false)
+  const [saldo, setSaldo] = useState<any>(null)
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -17,6 +18,10 @@ export default function InstructorDashboard() {
         .then(r => r.json())
         .then(d => setSub(d.subscription))
         .finally(() => setSubLoaded(true))
+
+      fetch('/api/instrutor/saldo')
+        .then(r => r.json())
+        .then(d => setSaldo(d))
     }
   }, [status])
 
@@ -52,6 +57,22 @@ export default function InstructorDashboard() {
           >
             <CreditCard className="w-4 h-4" /> Assinar agora
           </button>
+        </div>
+      )}
+
+      {/* Banner: saldo devedor */}
+      {saldo && saldo.saldoDevedor > 0 && (
+        <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-2xl p-5 flex items-start gap-4">
+          <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+            <TrendingDown className="w-5 h-5 text-red-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-red-900 text-sm">Você tem um débito com a plataforma</p>
+            <p className="text-xs text-red-700 mt-1">
+              Taxa de aulas presenciais agendadas pela DirigêJá: <strong>R$ {saldo.saldoDevedor.toFixed(2)}</strong>.
+              Este valor será descontado automaticamente no seu próximo pagamento via plataforma.
+            </p>
+          </div>
         </div>
       )}
 

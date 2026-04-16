@@ -8,7 +8,13 @@ export default async function AdminKYCPage() {
   if (!session || session.user.role !== 'ADMIN') redirect('/login')
 
   const kycs = await prisma.kYC.findMany({
-    include: { user: true },
+    include: {
+      user: {
+        include: {
+          perfilInstrutor: { select: { id: true } },
+        },
+      },
+    },
     orderBy: [
       { status: 'asc' },
       { createdAt: 'desc' },

@@ -31,6 +31,7 @@ export default function InstructorConfigPage() {
   const [bio, setBio] = useState('')
   const [raio, setRaio] = useState('20')
   const [modoRecebimento, setModoRecebimento] = useState<'PLATAFORMA' | 'DIRETO'>('PLATAFORMA')
+  const [pixChave, setPixChave] = useState('')
   const [savingConfig, setSavingConfig] = useState(false)
   const [savedConfig, setSavedConfig] = useState(false)
 
@@ -53,6 +54,7 @@ export default function InstructorConfigPage() {
         if (data.bio) setBio(data.bio)
         if (data.raioAtendimentoKm) setRaio(String(data.raioAtendimentoKm))
         if (data.modoRecebimento) setModoRecebimento(data.modoRecebimento)
+        if (data.pixChave) setPixChave(data.pixChave)
       })
   }, [])
 
@@ -95,7 +97,7 @@ export default function InstructorConfigPage() {
     await fetch('/api/instrutor/configuracoes', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ precoPorHora: Number(preco), bio, raioAtendimentoKm: Number(raio), modoRecebimento }),
+      body: JSON.stringify({ precoPorHora: Number(preco), bio, raioAtendimentoKm: Number(raio), modoRecebimento, pixChave }),
     })
     setSavingConfig(false)
     setSavedConfig(true)
@@ -153,18 +155,18 @@ export default function InstructorConfigPage() {
             </div>
           </div>
 
-          {/* Modo de recebimento */}
+          {/* Aceita pagamento presencial */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Como deseja receber pelos agendamentos?</label>
-            <p className="text-xs text-gray-400 mb-3">Você escolhe como quer receber. O aluno verá essa opção antes de agendar.</p>
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Aceita pagamento presencial?</label>
+            <p className="text-xs text-gray-400 mb-3">O pagamento via plataforma (cartão/PIX) está sempre disponível. Aqui você define se o aluno também pode pagar diretamente na hora da aula.</p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setModoRecebimento('PLATAFORMA')}
                 className={`p-4 rounded-xl border-2 text-left transition-all ${modoRecebimento === 'PLATAFORMA' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}
               >
-                <div className="text-sm font-bold text-gray-900 mb-1">💳 Via plataforma</div>
-                <div className="text-xs text-gray-500 leading-snug">Aluno paga pelo site. Você recebe via repasse (90%). Mais seguro para ambos.</div>
+                <div className="text-sm font-bold text-gray-900 mb-1">Não, só pela plataforma</div>
+                <div className="text-xs text-gray-500 leading-snug">O aluno paga online ao agendar. Mais seguro e organizado.</div>
                 {modoRecebimento === 'PLATAFORMA' && <div className="mt-2 text-xs font-semibold text-green-600">✓ Selecionado</div>}
               </button>
               <button
@@ -172,14 +174,14 @@ export default function InstructorConfigPage() {
                 onClick={() => setModoRecebimento('DIRETO')}
                 className={`p-4 rounded-xl border-2 text-left transition-all ${modoRecebimento === 'DIRETO' ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:border-gray-300'}`}
               >
-                <div className="text-sm font-bold text-gray-900 mb-1">🤝 Direto com aluno</div>
-                <div className="text-xs text-gray-500 leading-snug">Você combina o pagamento diretamente com o aluno. A plataforma não intermedia.</div>
+                <div className="text-sm font-bold text-gray-900 mb-1">Sim, também presencial</div>
+                <div className="text-xs text-gray-500 leading-snug">O aluno pode optar por pagar em dinheiro, PIX ou cartão na hora da aula.</div>
                 {modoRecebimento === 'DIRETO' && <div className="mt-2 text-xs font-semibold text-amber-600">✓ Selecionado</div>}
               </button>
             </div>
             {modoRecebimento === 'DIRETO' && (
               <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700 leading-relaxed">
-                ⚠️ Pagamentos negociados fora da plataforma são de responsabilidade exclusiva do instrutor e do aluno. A DirigêJá não se responsabiliza por disputas financeiras nessa modalidade.
+                ⚠️ Aulas pagas presencialmente geram uma taxa para a plataforma que será cobrada no seu próximo repasse.
               </div>
             )}
           </div>
@@ -192,6 +194,23 @@ export default function InstructorConfigPage() {
               rows={3}
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-sm resize-none"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Chave PIX para repasse</label>
+            <p className="text-xs text-gray-400 mb-2">Usada pela plataforma para transferir seus ganhos. Pode ser CPF, e-mail, telefone ou chave aleatória.</p>
+            <input
+              type="text"
+              value={pixChave}
+              onChange={e => setPixChave(e.target.value)}
+              placeholder="Ex: 11999999999 ou seu@email.com"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-sm"
+            />
+            {!pixChave && (
+              <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                ⚠️ Sem chave PIX cadastrada você não poderá receber repasses da plataforma.
+              </p>
+            )}
           </div>
         </div>
         {savedConfig && (

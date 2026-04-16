@@ -8,29 +8,35 @@ export async function POST(req: NextRequest, { params }: Params) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { data, hora, duracao } = await req.json()
+  const { data, hora, duracao, modoPagamento = 'PLATAFORMA' } = await req.json()
 
   if (!data || !hora || !duracao) {
     return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })
   }
 
-  // Fetch instructor profile
-  const perfil = await prisma.perfilInstrutor.findUnique({
-    where: { id: params.id },
-    include: {
-      user: { select: { id: true, nome: true, telefone: true } },
-      disponibilidades: { where: { ativo: true } },
-    },
-  })
+  if (!['PLATAFORMA', 'PRESENCIAL'].includes(modoPagamento)) {
+    return NextResponse.json({ error: 'modoPagamento inválido' }, { status: 400 })
+  }
+
+  const [perfil, configTaxa] = await Promise.all([
+    prisma.perfilInstrutor.findUnique({
+      where: { id: params.id },
+      include: {
+        user: { select: { id: true, nome: true, telefone: true } },
+        disponibilidades: { where: { ativo: true } },
+      },
+    }),
+    prisma.configuracao.findUnique({ where: { chave: 'taxa_plataforma' } }),
+  ])
 
   if (!perfil || !perfil.visivel) {
     return NextResponse.json({ error: 'Instrutor não encontrado' }, { status: 404 })
   }
 
-  // Validate availability: check that selected day/time falls within a disponibilidade slot
+  // Valida disponibilidade
   const dataAula = new Date(`${data}T${hora}:00`)
-  const diaSemana = dataAula.getDay() // 0=Sun, 6=Sat
-  const horaStr = hora // e.g. "09:00"
+  const diaSemana = dataAula.getDay()
+  const horaStr = hora
 
   const slotValido = perfil.disponibilidades.some(d => {
     if (d.diaSemana !== diaSemana) return false
@@ -41,7 +47,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Horário não disponível para este instrutor' }, { status: 409 })
   }
 
-  // Check for conflicts (another aula at same time)
+  // Verifica conflito de agenda
   const horaFim = new Date(dataAula)
   horaFim.setHours(horaFim.getHours() + duracao)
 
@@ -57,38 +63,54 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Instrutor já possui aula neste horário' }, { status: 409 })
   }
 
-  const precoPorHora = perfil.precoPorHora
-  const totalPago = precoPorHora * duracao
+  // Calcula valores financeiros
+  const taxaPct = Number(configTaxa?.valor ?? '10') / 100
+  const totalPago = perfil.precoPorHora * duracao
+  const taxaPlataforma = parseFloat((totalPago * taxaPct).toFixed(2))
+  const repasseInstrutor = parseFloat((totalPago - taxaPlataforma).toFixed(2))
 
-  // Create the lesson record
+  // Cria a aula
   const aula = await prisma.aula.create({
     data: {
       alunoId: session.user.id,
       instrutorId: perfil.userId,
       data: dataAula,
       duracaoHoras: duracao,
-      precoPorHora,
+      precoPorHora: perfil.precoPorHora,
       totalPago,
-      status: perfil.modoRecebimento === 'DIRETO' ? 'CONFIRMADA' : 'AGENDADA',
+      taxaPlataforma,
+      repasseInstrutor,
+      modoPagamento,
+      // Presencial → agendada (paga na hora); Plataforma → aguarda pagamento
+      status: modoPagamento === 'PRESENCIAL' ? 'CONFIRMADA' : 'AGENDADA',
     },
   })
 
-  // Build response
+  // Se for pagamento presencial, a plataforma não recebe agora:
+  // adiciona a taxa ao saldo devedor do instrutor
+  if (modoPagamento === 'PRESENCIAL') {
+    await prisma.perfilInstrutor.update({
+      where: { id: params.id },
+      data: { saldoDevedor: { increment: taxaPlataforma } },
+    })
+  }
+
   const responseData: any = {
     aulaId: aula.id,
-    modoRecebimento: perfil.modoRecebimento,
+    modoPagamento,
+    totalPago,
+    taxaPlataforma,
+    repasseInstrutor,
     instrutor: { nome: perfil.user.nome },
     data,
     hora,
     duracao,
-    precoPorHora,
-    totalPago,
-    taxaPlataforma: perfil.modoRecebimento === 'PLATAFORMA' ? totalPago * 0.1 : 0,
-    totalComTaxa: perfil.modoRecebimento === 'PLATAFORMA' ? totalPago * 1.1 : totalPago,
   }
 
-  // Always include phone — client shows it after payment confirmation
-  responseData.telefoneInstrutor = perfil.user.telefone ?? null
+  // Telefone revelado imediatamente para pagamento presencial
+  if (modoPagamento === 'PRESENCIAL') {
+    responseData.telefoneInstrutor = perfil.user.telefone ?? null
+  }
 
   return NextResponse.json(responseData, { status: 201 })
 }

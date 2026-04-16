@@ -172,29 +172,6 @@ export function SearchFilters({ filtros, onChange }: Props) {
         </div>
       </FilterGroup>
 
-      <FilterGroup label="Forma de pagamento">
-        <div className="flex flex-col gap-2">
-          {[
-            { val: '', label: 'Qualquer', desc: '' },
-            { val: 'PLATAFORMA', label: '💳 Via plataforma', desc: 'Pagamento pelo site' },
-            { val: 'DIRETO', label: '🤝 Direto com instrutor', desc: 'Negocia diretamente' },
-          ].map(o => (
-            <button
-              key={o.val}
-              onClick={() => set('modoPagamento', o.val)}
-              className={`w-full text-left px-3 py-2 rounded-xl border-2 text-xs font-medium transition-colors ${
-                (filtros.modoPagamento ?? '') === o.val
-                  ? 'border-green-500 bg-green-50 text-green-700'
-                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
-              }`}
-            >
-              {o.label}
-              {o.desc && <span className="block font-normal text-gray-400 mt-0.5">{o.desc}</span>}
-            </button>
-          ))}
-        </div>
-      </FilterGroup>
-
       <FilterGroup label="Especialidades">
         <div className="flex flex-wrap gap-2">
           {['Iniciantes', 'Baliza', 'Automático', 'Manual', 'Ansiedade', 'Estrada'].map(e => (

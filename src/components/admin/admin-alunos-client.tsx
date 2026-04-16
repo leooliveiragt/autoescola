@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Ban, CheckCircle, Pencil, X, Search } from 'lucide-react'
+import { Ban, CheckCircle, Pencil, X, Search, Eye } from 'lucide-react'
 
 export function AdminAlunosClient({ alunos }: { alunos: any[] }) {
   const router = useRouter()
@@ -13,6 +13,7 @@ export function AdminAlunosClient({ alunos }: { alunos: any[] }) {
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'ATIVO' | 'BLOQUEADO'>('TODOS')
   const [filtroKYC, setFiltroKYC] = useState('')
+  const [perfilAluno, setPerfilAluno] = useState<any>(null)
 
   const filtrados = alunos.filter(a => {
     const q = busca.toLowerCase()
@@ -132,6 +133,12 @@ export function AdminAlunosClient({ alunos }: { alunos: any[] }) {
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={() => setPerfilAluno(a)}
+                      className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Ver perfil
+                    </button>
+                    <button
                       onClick={() => openEdit(a)}
                       className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
                     >
@@ -153,6 +160,45 @@ export function AdminAlunosClient({ alunos }: { alunos: any[] }) {
           </tbody>
         </table>
       </div>
+
+      {/* Modal perfil do aluno */}
+      {perfilAluno && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="font-extrabold text-gray-900">Perfil do aluno</h2>
+              <button onClick={() => setPerfilAluno(null)} className="p-2 rounded-xl hover:bg-gray-100">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3 text-sm">
+              {[
+                { label: 'Nome', val: perfilAluno.nome },
+                { label: 'E-mail', val: perfilAluno.email },
+                { label: 'Telefone', val: perfilAluno.telefone ?? '—' },
+                { label: 'CPF', val: perfilAluno.cpf ?? '—' },
+                { label: 'Gênero', val: perfilAluno.genero ?? '—' },
+                { label: 'Status', val: perfilAluno.ativo ? 'Ativo' : 'Bloqueado' },
+                { label: 'Cadastro', val: new Date(perfilAluno.createdAt).toLocaleDateString('pt-BR') },
+                { label: 'KYC', val: perfilAluno.kyc ? perfilAluno.kyc.status : 'Não enviado' },
+              ].map(({ label, val }) => (
+                <div key={label} className="flex justify-between border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+                  <span className="text-gray-500 font-medium">{label}</span>
+                  <span className="font-semibold text-gray-900 text-right max-w-[60%] truncate">{val}</span>
+                </div>
+              ))}
+            </div>
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => setPerfilAluno(null)}
+                className="w-full py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 text-sm transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit modal */}
       {editing && (

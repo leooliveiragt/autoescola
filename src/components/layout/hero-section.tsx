@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Search, MapPin, Star, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { SteeringWheel, Tyre, TrafficLight, Speedometer } from './driving-icons'
 
 const CIDADES_POPULARES = [
@@ -18,11 +19,20 @@ const FEATURED_CARDS = [
 
 export function HeroSection() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const role = session?.user?.role
   const [query, setQuery] = useState('')
+
+  function resolveDestino(fallback = '/buscar') {
+    if (role === 'INSTRUTOR') return '/instrutor/dashboard'
+    if (role === 'ADMIN') return '/admin'
+    if (session) return fallback
+    return `/login?redirect=${encodeURIComponent(fallback)}`
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    router.push(`/login?redirect=/buscar${query ? `?q=${encodeURIComponent(query)}` : ''}`)
+    router.push(resolveDestino(query ? `/buscar?q=${encodeURIComponent(query)}` : '/buscar'))
   }
 
   return (
@@ -34,7 +44,7 @@ export function HeroSection() {
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold mb-6">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              Nova regra do Detran 2024 — CNH sem autoescola obrigatória
+              Nova regra do Detran 2026 — CNH sem autoescola obrigatória
             </div>
 
             <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-5" style={{ fontFamily: 'Plus Jakarta Sans' }}>
@@ -71,7 +81,7 @@ export function HeroSection() {
               {CIDADES_POPULARES.map((cidade) => (
                 <Link
                   key={cidade}
-                  href="/login"
+                  href={resolveDestino()}
                   className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-700 transition-colors"
                 >
                   {cidade}
@@ -153,7 +163,7 @@ export function HeroSection() {
                   <div
                     key={c.initials}
                     className="bg-white rounded-2xl p-4 border border-gray-200 flex items-center gap-4 hover:border-green-400 hover:shadow-sm transition-all cursor-pointer"
-                    onClick={() => router.push('/login')}
+                    onClick={() => router.push(resolveDestino())}
                   >
                     <div className={`w-11 h-11 rounded-full ${c.bg} ${c.text} flex items-center justify-center font-bold text-sm shrink-0`}>
                       {c.initials}
@@ -174,10 +184,10 @@ export function HeroSection() {
                   </div>
                 ))}
                 <Link
-                  href="/login"
+                  href={resolveDestino()}
                   className="w-full py-3 text-sm font-semibold text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors text-center"
                 >
-                  Ver todos os instrutores →
+                  {role === 'INSTRUTOR' ? 'Ir para meu painel →' : 'Ver todos os instrutores →'}
                 </Link>
               </div>
             </div>

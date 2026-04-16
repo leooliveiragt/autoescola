@@ -30,6 +30,7 @@ export async function GET() {
       bio: perfil.bio ?? '',
       especialidades: perfil.especialidades,
       modoRecebimento: (perfil as any).modoRecebimento,
+      pixChave: (perfil as any).pixChave ?? '',
     })
   } catch (err) {
     console.error('[GET /api/instrutor/perfil]', err)

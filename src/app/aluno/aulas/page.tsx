@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/navbar'
 import {
-  Calendar, Search, ChevronDown, ChevronUp, Phone, ExternalLink, Loader2,
+  Calendar, Search, ChevronDown, ChevronUp, Phone, ExternalLink, Loader2, XCircle, AlertTriangle,
 } from 'lucide-react'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -47,6 +47,10 @@ export default function MinhasAulasPage() {
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [cancelando, setCancelando] = useState<string | null>(null)
+  const [cancelErro, setCancelErro] = useState<{ id: string; msg: string; foraPrazo: boolean } | null>(null)
+  const [cancelSucesso, setCancelSucesso] = useState<string | null>(null)
+  const [confirmarCancel, setConfirmarCancel] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login?redirect=/aluno/aulas')
@@ -60,6 +64,43 @@ export default function MinhasAulasPage() {
         .finally(() => setLoading(false))
     }
   }, [status])
+
+  async function handleCancelar(aulaId: string) {
+    setCancelando(aulaId)
+    setCancelErro(null)
+    setCancelSucesso(null)
+    setConfirmarCancel(null)
+    try {
+      const res = await fetch('/api/aluno/aulas/cancelar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aulaId }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setCancelErro({ id: aulaId, msg: json.error, foraPrazo: json.code === 'FORA_DO_PRAZO' })
+      } else {
+        setCancelSucesso(aulaId)
+        setAulas(prev => prev.map(a => a.id === aulaId ? { ...a, status: 'CANCELADA' } : a))
+      }
+    } catch {
+      setCancelErro({ id: aulaId, msg: 'Erro de conexão. Tente novamente.', foraPrazo: false })
+    } finally {
+      setCancelando(null)
+    }
+  }
+
+  function podeCancel(aula: any) {
+    if (aula.status !== 'AGENDADA' && aula.status !== 'CONFIRMADA') return false
+    const horas = (new Date(aula.data).getTime() - Date.now()) / (1000 * 60 * 60)
+    return horas >= 48
+  }
+
+  function dentroPrazo(aula: any) {
+    if (aula.status !== 'AGENDADA' && aula.status !== 'CONFIRMADA') return false
+    const horas = (new Date(aula.data).getTime() - Date.now()) / (1000 * 60 * 60)
+    return horas > 0 && horas < 48
+  }
 
   if (status === 'loading' || status === 'unauthenticated') return null
 
@@ -210,32 +251,61 @@ export default function MinhasAulasPage() {
                   </button>
 
                   {expanded && (
-                    <div className="border-t border-gray-100 px-5 py-4 bg-gray-50 flex flex-wrap items-center gap-3">
-                      <div className="flex-1 min-w-0 space-y-1 text-sm">
-                        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Detalhes da aula</p>
-                        <p className="text-gray-700">{dt.full}</p>
-                        <p className="text-gray-500">Duração: {a.duracaoHoras}h · Valor: {fmtMoeda(a.totalPago)}</p>
+                    <div className="border-t border-gray-100 px-5 py-4 bg-gray-50 space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex-1 min-w-0 space-y-1 text-sm">
+                          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Detalhes da aula</p>
+                          <p className="text-gray-700">{dt.full}</p>
+                          <p className="text-gray-500">Duração: {a.duracaoHoras}h · Valor: {fmtMoeda(a.totalPago)}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {a.instrutor.telefone && (
+                            <a
+                              href={`https://wa.me/55${a.instrutor.telefone.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-bold rounded-xl hover:bg-green-700 transition-colors"
+                            >
+                              <Phone className="w-3.5 h-3.5" /> WhatsApp
+                            </a>
+                          )}
+                          {a.perfilId && (
+                            <Link
+                              href={`/instrutor/${a.perfilId}`}
+                              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:border-gray-300 transition-colors"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" /> Ver perfil
+                            </Link>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {a.instrutor.telefone && (
-                          <a
-                            href={`https://wa.me/55${a.instrutor.telefone.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-bold rounded-xl hover:bg-green-700 transition-colors"
-                          >
-                            <Phone className="w-3.5 h-3.5" /> WhatsApp
-                          </a>
-                        )}
-                        {a.perfilId && (
-                          <Link
-                            href={`/instrutor/${a.perfilId}`}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:border-gray-300 transition-colors"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" /> Ver perfil
-                          </Link>
-                        )}
-                      </div>
+
+                      {/* Cancelamento */}
+                      {cancelSucesso === a.id && (
+                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 font-medium">
+                          <XCircle className="w-4 h-4 shrink-0" /> Aula cancelada. O estorno será processado em até 5 dias úteis.
+                        </div>
+                      )}
+                      {cancelErro !== null && cancelErro.id === a.id && (
+                        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+                          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>{cancelErro.msg}</span>
+                        </div>
+                      )}
+                      {podeCancel(a) && cancelSucesso !== a.id && (
+                        <button
+                          onClick={() => setConfirmarCancel(a.id)}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl hover:bg-red-100 transition-colors"
+                        >
+                          <XCircle className="w-3.5 h-3.5" /> Cancelar aula
+                        </button>
+                      )}
+                      {dentroPrazo(a) && (
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          Cancelamento indisponível — a aula ocorre em menos de 48h e não há estorno.
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

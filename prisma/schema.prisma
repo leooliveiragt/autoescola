@@ -157,6 +157,9 @@ model PerfilInstrutor {
   totalAvaliacoes  Int                @default(0)
   visivel          Boolean            @default(false)
   modoRecebimento  ModoRecebimento    @default(PLATAFORMA)
+  pixChave         String?            // chave PIX para repasse manual (CPF, e-mail, telefone ou aleatória)
+  // Saldo financeiro: positivo = plataforma deve ao instrutor; negativo = instrutor deve à plataforma
+  saldoDevedor     Float              @default(0)
   subscription     Subscription?
   disponibilidades Disponibilidade[]
   veiculo          Veiculo?
@@ -222,6 +225,10 @@ model Aula {
   precoPorHora Float
   totalPago   Float
   status      AulaStatus @default(AGENDADA)
+  // PLATAFORMA = pago via cartão/PIX pela plataforma; PRESENCIAL = pago na hora ao instrutor
+  modoPagamento String   @default("PLATAFORMA")
+  taxaPlataforma Float   @default(0)   // valor que a plataforma retém / cobrou do instrutor
+  repasseInstrutor Float @default(0)   // valor líquido que o instrutor recebe/deve receber
   stripePaymentIntentId String?
   notasAluno  String?
   notasInstrutor String?
